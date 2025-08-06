@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AlbumArt from './components/AlbumArt';
 import AnswerOptions from './components/AnswerOptions';
+import FilterSidebar from './components/FilterSidebar';
+import { CheckCircle, Eye } from 'lucide-react';
 
 export default function Home() {
   const [genre, setGenre] = useState<string | null>(null);
@@ -10,6 +12,7 @@ export default function Home() {
   const [correct, setCorrect] = useState(3);
   const [viewed, setViewed] = useState(7);
   const [selected, setSelected] = useState<string | null>(null);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
   const quizData = {
     albumCover:
@@ -25,63 +28,80 @@ export default function Home() {
 
   const handleAnswerClick = (answer: string) => {
     setSelected(answer);
-    setViewed(viewed + 1);
-    if (answer === quizData.correctAnswer) {
-      setCorrect(correct + 1);
+    setViewed((v) => v + 1);
+
+    const correct = answer === quizData.correctAnswer;
+    setIsCorrect(correct);
+
+    if (correct) {
+      setCorrect((c) => c + 1);
     }
   };
 
-  return (
-    <main className="min-h-screen flex bg-[#1f1f1f]">
-      {/* Sidebar directly under the logo */}
-      <aside className="hidden sm:block fixed left-4 top-20 w-44 font-mono space-y-6">
-        <div>
-          <div className="text-xs text-gray-400 uppercase mb-2 pl-1">Genre</div>
-          <div className="flex flex-wrap gap-2">
-            {['Rock', 'Pop', 'Hip Hop', 'Country'].map((g) => (
-              <button
-                key={g}
-                className={`px-3 py-1 rounded-lg text-sm transition bg-gray-800 hover:bg-indigo-600 ${
-                  genre === g ? 'bg-indigo-600 font-bold' : ''
-                }`}
-                onClick={() => setGenre(genre === g ? null : g)}
-              >
-                {g}
-              </button>
-            ))}
-          </div>
-        </div>
+  const fetchNextAlbum = () => {
+    // Placeholder logic — replace with real fetch later
+    setSelected(null);
+    setIsCorrect(null);
+    // Eventually update quizData here
+  };
 
-        <div>
-          <div className="text-xs text-gray-400 uppercase mb-2 pl-1">Decade</div>
-          <div className="flex flex-wrap gap-2">
-            {['60s', '70s', '80s', '90s', '00s', '10s', '20s'].map((d) => (
-              <button
-                key={d}
-                className={`px-3 py-1 rounded-lg text-sm transition bg-gray-800 hover:bg-indigo-600 ${
-                  decade === d ? 'bg-indigo-600 font-bold' : ''
-                }`}
-                onClick={() => setDecade(decade === d ? null : d)}
-              >
-                {d}
-              </button>
-            ))}
-          </div>
-        </div>
+  useEffect(() => {
+    if (selected && isCorrect) {
+      const timer = setTimeout(() => {
+        fetchNextAlbum();
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [selected, isCorrect]);
+
+  return (
+    <main className="min-h-screen flex bg-gradient-to-br from-[#1f1f1f] to-[#141414] text-white">
+      {/* Sidebar with filters under logo */}
+      <aside className="hidden sm:block fixed left-4 top-20 w-44 font-mono space-y-6">
+        <FilterSidebar
+          selectedGenre={genre}
+          onGenreChange={setGenre}
+          selectedDecade={decade}
+          onDecadeChange={setDecade}
+        />
       </aside>
 
-      {/* Main quiz content area */}
-      <div className="flex-1 sm:ml-56 pt-20 px-6 flex flex-col items-center">
-        <div className="text-sm text-gray-400 self-end mb-2">
-          Correct: {correct} / Viewed: {viewed}
-        </div>
+      {/* Fixed score badge */}
+      <div className="fixed top-6 right-6 sm:top-8 sm:right-8 bg-white/10 backdrop-blur-md text-sm text-white px-4 py-2 rounded-xl shadow-lg font-mono flex items-center gap-3 z-40">
+        <CheckCircle className="w-4 h-4 text-green-400" />
+        {correct}
+        <Eye className="w-4 h-4 text-blue-400" />
+        {viewed}
+      </div>
+
+      {/* Main quiz content */}
+      <div className="w-full pt-20 px-6 flex flex-col items-center">
         <AlbumArt imageUrl={quizData.albumCover} />
+
         <AnswerOptions
           options={quizData.options}
           correctAnswer={quizData.correctAnswer}
           selected={selected}
           onSelect={handleAnswerClick}
         />
+
+        {/* Feedback & Next for incorrect answers */}
+        {selected && isCorrect === false && (
+          <div className="mt-6 text-center space-y-3">
+            <p className="text-sm text-gray-300 italic">
+              💡 The correct answer was:{' '}
+              <span className="font-semibold text-white">
+                {quizData.correctAnswer}
+              </span>
+            </p>
+            <button
+              onClick={fetchNextAlbum}
+              className="bg-indigo-600 hover:bg-indigo-700 transition text-white px-4 py-2 rounded-xl shadow"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </main>
   );
