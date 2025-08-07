@@ -42,8 +42,8 @@ export async function GET(req: NextRequest) {
 
   const artistData = await artistRes.json();
   const artists = (artistData.artists?.items || []).filter(
-    artist => artist.popularity >= 60
-  );
+  (artist: { popularity: number }) => artist.popularity >= 60
+);
 
   if (artists.length < 4) {
     return NextResponse.json(
