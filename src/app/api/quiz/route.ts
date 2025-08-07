@@ -55,7 +55,8 @@ export async function GET(req: NextRequest) {
   const shuffledArtists = artists.sort(() => 0.5 - Math.random()).slice(0, 10);
 
   const artistAlbums = await Promise.all(
-    shuffledArtists.map(async (artist) => {
+    shuffledArtists.map(async (artist: { id: string }) => {
+
       try {
         const albumRes = await fetch(
           `https://api.spotify.com/v1/artists/${artist.id}/albums?include_groups=album&market=US&limit=20`,
@@ -69,7 +70,7 @@ export async function GET(req: NextRequest) {
         const albums = (await albumRes.json()).items || [];
         if (albums.length === 0) return null;
 
-        const album = albums.find(a => a.images?.[0]?.url);
+        const album = albums.find((a: { images?: { url: string }[] }) => a.images?.[0]?.url);
         if (!album) return null;
 
         return { artist, album };
