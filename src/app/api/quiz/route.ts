@@ -1,11 +1,6 @@
-// src/app/api/quiz/route.ts
-import { genreClusters } from '@/utils/genreClusters';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
-  const genre = req.nextUrl.searchParams.get('genre') || 'Rock';
-  const decade = req.nextUrl.searchParams.get('decade') || '90s';
-
   const clientId = process.env.SPOTIFY_CLIENT_ID;
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
@@ -35,11 +30,9 @@ export async function GET(req: NextRequest) {
   const tokenData = await tokenRes.json();
   const accessToken = tokenData.access_token;
 
-  const subgenres = genreClusters[genre] || [genre];
-  const chosenGenre = subgenres[Math.floor(Math.random() * subgenres.length)];
-  const query = `${chosenGenre} year:${mapDecadeToYears(decade)}`;
-  const searchRes = await fetch(
-    `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album&limit=50`,
+  // Search for popular artists (broad query)
+  const artistRes = await fetch(
+    `https://api.spotify.com/v1/search?q=a&type=artist&limit=50`,
     {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -47,56 +40,66 @@ export async function GET(req: NextRequest) {
     }
   );
 
-  const data = await searchRes.json();
-  const albums = data.albums?.items || [];
+  const artistData = await artistRes.json();
+  const artists = (artistData.artists?.items || []).filter(
+    artist => artist.popularity >= 80
+  );
 
-  if (albums.length < 4) {
+  if (artists.length < 4) {
     return NextResponse.json(
-      { error: 'Not enough albums found' },
+      { error: 'Not enough popular artists found' },
       { status: 404 }
     );
   }
 
-  const correct = albums[Math.floor(Math.random() * albums.length)];
-  const correctAnswer = `${correct.artists[0].name} - ${correct.name}`;
+  const shuffledArtists = artists.sort(() => 0.5 - Math.random()).slice(0, 10);
 
-  const distractors = (albums as {
-  id: string;
-  name: string;
-  artists: { name: string }[];
-}[])
-  .filter((a) => a.id !== correct.id && a.artists[0].name !== correct.artists[0].name)
-  .sort(() => 0.5 - Math.random())
-  .slice(0, 3)
-  .map((a) => `${a.artists[0].name} - ${a.name}`);
+  const artistAlbums = await Promise.all(
+    shuffledArtists.map(async (artist) => {
+      try {
+        const albumRes = await fetch(
+          `https://api.spotify.com/v1/artists/${artist.id}/albums?include_groups=album&market=US&limit=20`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
 
+        const albums = (await albumRes.json()).items || [];
+        if (albums.length === 0) return null;
+
+        const album = albums.find(a => a.images?.[0]?.url);
+        if (!album) return null;
+
+        return { artist, album };
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  const validAlbums = artistAlbums.filter(Boolean).slice(0, 4);
+
+  if (validAlbums.length < 4) {
+    return NextResponse.json(
+      { error: 'Could not find enough valid albums' },
+      { status: 404 }
+    );
+  }
+
+  const shuffled = validAlbums.sort(() => 0.5 - Math.random());
+  const correct = shuffled[0];
+  const correctAnswer = `${correct.artist.name} - ${correct.album.name}`;
+  const distractors = shuffled.slice(1).map(
+    entry => `${entry.artist.name} - ${entry.album.name}`
+  );
 
   const allOptions = [correctAnswer, ...distractors].sort(() => 0.5 - Math.random());
 
   return NextResponse.json({
-    albumCover: correct.images?.[0]?.url ?? '',
+    albumCover: correct.album.images?.[0]?.url ?? '',
     correctAnswer,
     options: allOptions,
   });
-}
-
-function mapDecadeToYears(decade: string): string {
-  switch (decade) {
-    case '60s':
-      return '1960-1969';
-    case '70s':
-      return '1970-1979';
-    case '80s':
-      return '1980-1989';
-    case '90s':
-      return '1990-1999';
-    case '00s':
-      return '2000-2009';
-    case '10s':
-      return '2010-2019';
-    case '20s':
-      return '2020-2025';
-    default:
-      return '1970-2025';
-  }
 }
