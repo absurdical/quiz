@@ -60,11 +60,16 @@ export async function GET(req: NextRequest) {
   const correct = albums[Math.floor(Math.random() * albums.length)];
   const correctAnswer = `${correct.artists[0].name} - ${correct.name}`;
 
-  const distractors = albums
-    .filter((a) => a.id !== correct.id && a.artists[0].name !== correct.artists[0].name)
-    .sort(() => 0.5 - Math.random())
-    .slice(0, 3)
-    .map((a) => `${a.artists[0].name} - ${a.name}`);
+  const distractors = (albums as {
+  id: string;
+  name: string;
+  artists: { name: string }[];
+}[])
+  .filter((a) => a.id !== correct.id && a.artists[0].name !== correct.artists[0].name)
+  .sort(() => 0.5 - Math.random())
+  .slice(0, 3)
+  .map((a) => `${a.artists[0].name} - ${a.name}`);
+
 
   const allOptions = [correctAnswer, ...distractors].sort(() => 0.5 - Math.random());
 
