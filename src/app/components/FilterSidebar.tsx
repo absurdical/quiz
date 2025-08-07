@@ -1,53 +1,84 @@
-type Props = {
-  selectedGenre: string | null;
-  onGenreChange: (g: string | null) => void;
-  selectedDecade: string | null;
-  onDecadeChange: (d: string | null) => void;
+'use client';
+
+import React from 'react';
+import { genreClusters } from '@/utils/genreClusters';
+
+interface FilterSidebarProps {
+  selectedGenre: string;
+  selectedDecade: string;
+  onGenreChange: (genre: string) => void;
+  onDecadeChange: (decade: string) => void;
+}
+
+const genreDisplayMap: Record<string, string> = {
+  Rock: 'Rock',
+  Pop: 'Pop',
+  Metal: 'Metal',
+  HipHop: 'Hip Hop',
+  Electronic: 'Electronic',
+  Jazz: 'Jazz',
+  Classical: 'Classical',
+  RnB_Soul: 'R&B / Soul',
+  Country: 'Country',
+  Latin: 'Latin',
+  Reggae: 'Reggae',
+  Folk: 'Folk',
+  World: 'World',
+  Chill: 'Chill / Ambient',
 };
 
-const genres = ['Rock', 'Pop', 'Hip Hop', 'Country'];
-const decades = ['60s', '70s', '80s', '90s', '00s', '10s', '20s'];
-
-export default function FilterSidebar({
+const FilterSidebar: React.FC<FilterSidebarProps> = ({
   selectedGenre,
-  onGenreChange,
   selectedDecade,
+  onGenreChange,
   onDecadeChange,
-}: Props) {
-  const base =
-    'px-3 py-1 rounded-lg text-sm font-medium transition bg-gray-800 text-white hover:bg-indigo-600';
-  const active = 'bg-indigo-600 text-white font-bold';
+}) => {
+  const genres = Object.keys(genreClusters);
+  const decades = ['60s', '70s', '80s', '90s', '2000s', '2010s', '2020s'];
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6 text-sm">
+      {/* Genre Filter */}
       <div>
-        <div className="text-xs text-gray-400 uppercase mb-2 pl-1">Genre</div>
+        <p className="font-semibold mb-2 text-white">Genre</p>
         <div className="flex flex-wrap gap-2">
-          {genres.map((g) => (
+          {genres.map((genre) => (
             <button
-              key={g}
-              className={`${base} ${selectedGenre === g ? active : ''}`}
-              onClick={() => onGenreChange(selectedGenre === g ? null : g)}
+              key={genre}
+              onClick={() => onGenreChange(genre)}
+              className={`px-3 py-1 rounded-full border text-sm font-medium transition ${
+                selectedGenre === genre
+                  ? 'bg-green-500 text-white border-green-500 shadow-md'
+                  : 'border-gray-600 text-gray-200 hover:bg-gray-700'
+              }`}
             >
-              {g}
+              {genreDisplayMap[genre] || genre}
             </button>
           ))}
         </div>
       </div>
+
+      {/* Decade Filter */}
       <div>
-        <div className="text-xs text-gray-400 uppercase mb-2 pl-1">Decade</div>
+        <p className="font-semibold mb-2 text-white">Decade</p>
         <div className="flex flex-wrap gap-2">
-          {decades.map((d) => (
+          {decades.map((decade) => (
             <button
-              key={d}
-              className={`${base} ${selectedDecade === d ? active : ''}`}
-              onClick={() => onDecadeChange(selectedDecade === d ? null : d)}
+              key={decade}
+              onClick={() => onDecadeChange(decade)}
+              className={`px-3 py-1 rounded-full border text-sm font-medium transition ${
+                selectedDecade === decade
+                  ? 'bg-green-500 text-white border-green-500 shadow-md'
+                  : 'border-gray-600 text-gray-200 hover:bg-gray-700'
+              }`}
             >
-              {d}
+              {decade}
             </button>
           ))}
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default FilterSidebar;

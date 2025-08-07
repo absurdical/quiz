@@ -30,3 +30,7 @@ body {
 .smiledust-font {
   font-family: 'Pacifico', cursive;
 }
+
+:root {
+  --vh: 1vh;
+}
