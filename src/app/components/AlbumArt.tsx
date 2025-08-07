@@ -1,22 +1,24 @@
 'use client';
 
-import Image from 'next/image';
+import React from 'react';
 
-type AlbumArtProps = {
+interface AlbumArtProps {
   imageUrl: string;
-};
+  blurred?: boolean;
+}
 
-export default function AlbumArt({ imageUrl }: AlbumArtProps) {
+const AlbumArt: React.FC<AlbumArtProps> = ({ imageUrl, blurred = false }) => {
   return (
-    <div className="w-full max-w-xs mb-8">
-      <Image
+    <div className="w-full max-w-sm aspect-square rounded-xl overflow-hidden shadow-lg border border-white/10">
+      <img
         src={imageUrl}
         alt="Album Cover"
-        width={500}
-        height={500}
-        priority
-        className="rounded-lg shadow-xl object-cover w-full h-auto"
+        className={`w-full h-full object-cover transition duration-500 ${
+          blurred ? 'blur-md scale-105 brightness-90' : ''
+        }`}
       />
     </div>
   );
-}
+};
+
+export default AlbumArt;

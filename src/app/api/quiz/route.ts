@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
 
   // Search for popular artists (broad query)
   const artistRes = await fetch(
-    `https://api.spotify.com/v1/search?q=a&type=artist&limit=50`,
+    `https://api.spotify.com/v1/search?q=a&type=artist&market=US&limit=50`,
     {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
 
   const artistData = await artistRes.json();
   const artists = (artistData.artists?.items || []).filter(
-    artist => artist.popularity >= 80
+    artist => artist.popularity >= 60
   );
 
   if (artists.length < 4) {

@@ -92,7 +92,7 @@ export default function Home() {
             </p>
           ) : (
             <>
-              <AlbumArt imageUrl={quizData.albumCover} />
+              <AlbumArt imageUrl={quizData.albumCover} blurred={!selected} />
 
               {/* Answer Buttons */}
               <div className="mt-8 w-full grid grid-cols-1 sm:grid-cols-2 gap-4 px-4">
